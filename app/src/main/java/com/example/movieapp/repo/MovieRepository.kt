@@ -14,10 +14,10 @@ import javax.inject.Singleton
 class MovieRepository @Inject constructor(private val movieResponseApi: MovieResponseApi) {
 
 
-    suspend fun getMovieResponse(page: Int): Response<List<Result>> =
+    suspend fun getMovieResponse(page: Int): Response<MovieResponse> =
         movieResponseApi.getPopularMovies(API_KEY, page)
 
-    suspend fun searchMovieResponse(query: String): Response<List<Result>> =
+    suspend fun searchMovieResponse(query: String): Response<MovieResponse> =
         movieResponseApi.searchMovies(API_KEY, query)
 
 }

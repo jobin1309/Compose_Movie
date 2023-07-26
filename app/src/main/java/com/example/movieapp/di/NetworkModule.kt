@@ -8,6 +8,7 @@ import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
+import javax.inject.Singleton
 
 
 @Module
@@ -15,6 +16,7 @@ import retrofit2.converter.gson.GsonConverterFactory
 object NetworkModule {
 
 
+    @Singleton
     @Provides
     fun getRetrofitInstance(): Retrofit =
         Retrofit.Builder()
@@ -22,7 +24,7 @@ object NetworkModule {
             .addConverterFactory(GsonConverterFactory.create())
             .build()
 
-
+    @Singleton
     @Provides
     fun provideApiService(retrofit: Retrofit): MovieResponseApi =
         retrofit.create(MovieResponseApi::class.java)

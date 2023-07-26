@@ -26,8 +26,9 @@ class MovieViewmodel @Inject constructor(
     private var movieRepository: MovieRepository
 ) : AndroidViewModel(application) {
 
-    private var _movies =  MutableStateFlow(emptyList<Result>())
-    val movies: StateFlow<List<Result>> get() = _movies
+    private var _movies: MutableLiveData<NetworkResult<MovieResponse>> = MutableLiveData()
+
+    val movies: LiveData<NetworkResult<MovieResponse>> get() = _movies
 
     init {
         getMovieResponse()
@@ -36,39 +37,40 @@ class MovieViewmodel @Inject constructor(
      fun getMovieResponse() {
         viewModelScope.launch {
             try {
-                val response = movieRepository.getMovieResponse(1)
-                _movies.value = response.body()!!
+                val response = handleMoviesResponse(movieRepository.getMovieResponse(1))
+                _movies.value = response
+                Log.d("Movies", _movies.toString())
             } catch (e: Exception) {
-                Log.d("Response", "Error has occured")
+                Log.d("Response", e.message.toString())
             }
         }
     }
 
-//    private fun handleMoviesResponse(response: Response<MovieResponse>): NetworkResult<MovieResponse> {
-//        when {
-//            response.message().toString().contains("timeout") -> {
-//                return NetworkResult.Error("Timeout")
-//            }
-//
-//            response.code() == 402 -> {
-//                return NetworkResult.Error("API key Limited")
-//            }
-//
-//            response.body()!!.results.isNullOrEmpty() -> {
-//                return NetworkResult.Error("Recipes not found")
-//            }
-//
-//            response.isSuccessful -> {
-//                val MovieResponse = response.body()
-//                Log.d("Response", response.body().toString())
-//                return NetworkResult.Success(MovieResponse!!)
-//            }
-//
-//            else -> {
-//                return NetworkResult.Error(response.message())
-//            }
-//
-//        }
-//    }
+    private fun handleMoviesResponse(response: Response<MovieResponse>): NetworkResult<MovieResponse> {
+        when {
+            response.message().toString().contains("timeout") -> {
+                return NetworkResult.Error("Timeout")
+            }
+
+            response.code() == 402 -> {
+                return NetworkResult.Error("API key Limited")
+            }
+
+            response.body()!!.results.isNullOrEmpty() -> {
+                return NetworkResult.Error("Recipes not found")
+            }
+
+            response.isSuccessful -> {
+                val MovieResponse = response.body()
+                Log.d("Response", response.body().toString())
+                return NetworkResult.Success(MovieResponse!!)
+            }
+
+            else -> {
+                return NetworkResult.Error(response.message())
+            }
+
+        }
+    }
 
 }

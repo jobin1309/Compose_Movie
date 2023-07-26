@@ -3,6 +3,7 @@ package com.example.movieapp
 import android.net.Uri
 import android.os.Bundle
 import android.provider.SyncStateContract.Columns
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
@@ -38,8 +39,11 @@ import androidx.compose.ui.modifier.modifierLocalConsumer
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.MutableLiveData
@@ -56,8 +60,12 @@ import com.example.movieapp.utlis.Constants
 import com.example.movieapp.viewmodel.MovieViewmodel
 import dagger.hilt.android.AndroidEntryPoint
 
+
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
+
+    private val viewModel by viewModels<MovieViewmodel>()
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
@@ -68,7 +76,7 @@ class MainActivity : ComponentActivity() {
                 Surface(
                     modifier = Modifier.fillMaxSize(),
                 ) {
-                    moviePage()
+                    moviePage(viewModel)
                 }
             }
         }
@@ -76,7 +84,7 @@ class MainActivity : ComponentActivity() {
 
     @Composable
     fun movieCard(movieResult: Result) {
-        val image = rememberAsyncImagePainter(Constants.POSTER_BASE_URL + movieResult.poster_path)
+        val image = rememberAsyncImagePainter(Constants.POSTER_BASE_URL + movieResult.posterPath)
 
         Card(
             modifier = Modifier.padding(top = 5.dp, bottom = 5.dp, start = 10.dp, end = 10.dp),
@@ -95,35 +103,65 @@ class MainActivity : ComponentActivity() {
                         .fillMaxWidth()
                         .height(250.dp)
                 )
-                 Column(Modifier.padding(10.dp)) {
-                     
-                 }
+                Column(Modifier.padding(10.dp)) {
+                    Text(
+                        text = movieResult.title,
+                        fontSize = 20.sp,
+                        fontWeight = FontWeight.Bold,
+                        fontFamily = FontFamily.SansSerif
+                    )
+                    Text(
+                        text = movieResult.releaseDate,
+                        fontSize = 20.sp,
+                        fontWeight = FontWeight.Bold,
+                        fontFamily = FontFamily.SansSerif
+                    )
+                }
             }
         }
     }
 
 
     @Composable
-    fun moviePage() {
+    fun moviePage(viewModel: MovieViewmodel) {
 
-        val movieViewmodel = viewModel(modelClass = MovieViewmodel::class.java)
-        val movies by movieViewmodel.movies.collectAsState()
+        val movieState by viewModel.movies.observeAsState()
+
 
         LazyColumn() {
-            items(movies) { movie ->
-                movieCard(movieResult = movie)
+
+            when (movieState) {
+                is NetworkResult.Loading<*> -> {
+                    Log.d("MovieState", "MovieState is loading")
+                }
+
+                is NetworkResult.Success<*> -> {
+                    val movieResponse = (movieState as NetworkResult.Success<MovieResponse>).data
+                    if (movieResponse != null) {
+                        items(movieResponse.results) { movie ->
+                            movieCard(movieResult = movie)
+                        }
+                    }
+                    Log.d("MovieState", "Movie response is SuccessFull")
+                }
+
+
+                else -> {}
 
             }
         }
+        Log.d("MoviesFetch", viewModel.movies.toString())
+
     }
 
     @Composable
     @Preview(showBackground = true)
     fun movieRowPreview() {
-        movieCard(result)
+
     }
-
-    val result = Result(1, "INTERSTELLAR")
-
 }
+
+
+
+
 
