@@ -1,6 +1,7 @@
 package com.example.movieapp.repo
 
 import com.example.movieapp.model.MovieResponse
+import com.example.movieapp.model.Result
 import com.example.movieapp.remote.MovieResponseApi
 import com.example.movieapp.utlis.Constants.API_KEY
 import retrofit2.Response
@@ -13,10 +14,10 @@ import javax.inject.Singleton
 class MovieRepository @Inject constructor(private val movieResponseApi: MovieResponseApi) {
 
 
-    suspend fun getMovieResponse(page: Int): Response<MovieResponse> =
+    suspend fun getMovieResponse(page: Int): Response<List<Result>> =
         movieResponseApi.getPopularMovies(API_KEY, page)
 
-    suspend fun searchMovieResponse(query: String): Response<MovieResponse> =
+    suspend fun searchMovieResponse(query: String): Response<List<Result>> =
         movieResponseApi.searchMovies(API_KEY, query)
 
 }
