@@ -6,7 +6,7 @@ import com.example.movieapp.model.Result
 
 
 
-@Database(entities = [Result::class],version = 1,  exportSchema = false )
+@Database(entities = [Result::class],version = 2,  exportSchema = false )
 abstract class MovieDatabase: RoomDatabase() {
 
     abstract fun MovieDao(): MovieDao;

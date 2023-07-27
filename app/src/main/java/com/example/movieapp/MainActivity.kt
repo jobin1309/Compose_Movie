@@ -1,70 +1,48 @@
 package com.example.movieapp
 
-import android.net.Uri
 import android.os.Bundle
-import android.provider.SyncStateContract.Columns
 import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.CardElevation
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.ComposeCompilerApi
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.modifier.modifierLocalConsumer
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.AndroidViewModel
-import androidx.lifecycle.LifecycleOwner
-import androidx.lifecycle.MutableLiveData
-import androidx.lifecycle.ViewModel
-import androidx.lifecycle.asFlow
-import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.rememberAsyncImagePainter
-import coil.compose.rememberImagePainter
 import coil.request.ImageRequest
 import com.example.movieapp.model.MovieResponse
 import com.example.movieapp.model.Result
 import com.example.movieapp.ui.theme.MovieAppTheme
 import com.example.movieapp.utlis.Constants
-import com.example.movieapp.viewmodel.MovieViewmodel
+import com.example.movieapp.viewmodel.MovieViewModel
 import dagger.hilt.android.AndroidEntryPoint
 
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
 
-    private val viewModel by viewModels<MovieViewmodel>()
+    private val viewModel by viewModels<MovieViewModel>()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -76,15 +54,24 @@ class MainActivity : ComponentActivity() {
                 Surface(
                     modifier = Modifier.fillMaxSize(),
                 ) {
-                    moviePage(viewModel)
+                    MovieScreen(viewModel)
                 }
             }
         }
     }
 
     @Composable
-    fun movieCard(movieResult: Result) {
-        val image = rememberAsyncImagePainter(Constants.POSTER_BASE_URL + movieResult.posterPath)
+    fun MovieCard(movieResult: Result) {
+        val imagePainter = rememberAsyncImagePainter(
+            ImageRequest.Builder
+                (LocalContext.current)
+                .data(data = Constants.POSTER_BASE_URL + movieResult.posterPath)
+                .apply(block = fun ImageRequest.Builder.() {
+                    crossfade(true)
+                    placeholder(R.drawable.ic_launcher_background)
+                    error(com.google.android.material.R.drawable.mtrl_ic_error)
+                }).build()
+        )
 
         Card(
             modifier = Modifier.padding(top = 5.dp, bottom = 5.dp, start = 10.dp, end = 10.dp),
@@ -93,10 +80,9 @@ class MainActivity : ComponentActivity() {
                 defaultElevation = 10.dp
             )
         ) {
-
             Column() {
                 Image(
-                    painter = image,
+                    painter = imagePainter,
                     contentDescription = "poster",
                     contentScale = ContentScale.Crop,
                     modifier = Modifier
@@ -121,14 +107,14 @@ class MainActivity : ComponentActivity() {
         }
     }
 
-
     @Composable
-    fun moviePage(viewModel: MovieViewmodel) {
+    fun moviePage(viewModel: MovieViewModel) {
 
         val movieState by viewModel.movies.observeAsState()
-
+//        val movieDatabaseState by viewModel.room_movies.observeAsState()
 
         LazyColumn() {
+
 
             when (movieState) {
                 is NetworkResult.Loading<*> -> {
@@ -139,12 +125,11 @@ class MainActivity : ComponentActivity() {
                     val movieResponse = (movieState as NetworkResult.Success<MovieResponse>).data
                     if (movieResponse != null) {
                         items(movieResponse.results) { movie ->
-                            movieCard(movieResult = movie)
+                            MovieCard(movie)
                         }
                     }
                     Log.d("MovieState", "Movie response is SuccessFull")
                 }
-
 
                 else -> {}
 
@@ -153,6 +138,19 @@ class MainActivity : ComponentActivity() {
         Log.d("MoviesFetch", viewModel.movies.toString())
 
     }
+
+    @Composable
+    fun MovieScreen(viewModel: MovieViewModel) {
+        val movieRoomState by viewModel.roomMovies.observeAsState()
+
+        LazyColumn() {
+            items(movieRoomState ?: emptyList()) { movieResult ->
+                MovieCard(movieResult)
+            }
+        }
+
+    }
+
 
     @Composable
     @Preview(showBackground = true)
