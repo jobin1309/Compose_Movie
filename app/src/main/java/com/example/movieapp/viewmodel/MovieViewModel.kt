@@ -34,6 +34,7 @@ class MovieViewmodel @Inject constructor(
         getMovieResponse()
     }
 
+
      fun getMovieResponse() {
         viewModelScope.launch {
             try {
